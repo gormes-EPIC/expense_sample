@@ -1,0 +1,4 @@
+Flask
+Flask-Login
+psycopg[binary]
+python-dotenv
