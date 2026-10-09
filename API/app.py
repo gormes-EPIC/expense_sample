@@ -6,12 +6,13 @@ from pathlib import Path
 
 import psycopg
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask.json.provider import DefaultJSONProvider
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
 from psycopg.rows import dict_row
 
 load_dotenv(Path(__file__).parent / ".env")
+FRONTEND = Path(__file__).parent.parent / "frontend"
 
 
 class JSONProvider(DefaultJSONProvider):
@@ -84,6 +85,13 @@ def login():
 def logout():
     logout_user()
     return jsonify(message="logged out")
+
+
+# --- Frontend: served from the same origin so the session cookie just works --
+
+@app.get("/")
+def index():
+    return send_from_directory(FRONTEND, "index.html")
 
 
 # --- Database errors -> JSON responses --------------------------------------

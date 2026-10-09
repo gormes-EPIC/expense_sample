@@ -1,10 +1,10 @@
 # Personal Expense Tracker
 
-A PostgreSQL database for logging expenses by category, and a Flask API that exposes each of its queries over HTTP behind a login.
+A PostgreSQL database for logging expenses by category, a Flask API that exposes each of its queries over HTTP behind a login, and a single-page web frontend for the API.
 
 ```mermaid
 flowchart LR
-    client["HTTP client<br/>(curl, dashboard, ...)"]
+    client["Browser<br/>(frontend/index.html)<br/>or any HTTP client"]
     subgraph api["API/app.py"]
         auth["Flask-Login<br/>session cookie"]
         routes["Route handlers<br/>one per use case"]
@@ -27,6 +27,7 @@ flowchart LR
 | `API/app.py` | The Flask API |
 | `API/requirements.txt` | Python dependencies |
 | `API/.env` | Secrets and system-specific settings (placeholders until filled in) |
+| `frontend/index.html` | The web frontend: one HTML file with inline CSS and JavaScript |
 | `datadictionary.md` | Use cases, business rules and the data dictionary |
 
 ---
@@ -197,6 +198,8 @@ Errors are JSON objects of the form `{"error": "<message>"}`.
 
 ### Example session
 
+These examples use curl; the [frontend](#frontend) makes the same calls from the browser.
+
 ```bash
 BASE=http://<API_HOST>:<API_PORT>
 
@@ -225,3 +228,23 @@ curl -b cookies.txt "$BASE/expenses/monthly-total?month=2026-09"
 # Delete an expense
 curl -b cookies.txt -X DELETE $BASE/expenses/1
 ```
+
+---
+
+## Frontend
+
+`frontend/index.html` is a single page with no build step and no dependencies. The API serves it at `/`, so once the server is running, open `http://<API_HOST>:<API_PORT>/` and log in with `API_USERNAME` and `API_PASSWORD`.
+
+The page must be loaded from the API rather than opened as a file: it calls the API with relative URLs and relies on the session cookie being same-origin.
+
+| Part of the page | What it does | Endpoints used |
+|------------------|--------------|----------------|
+| Login screen | Logs in; shown whenever the API answers `401` | `POST /login` |
+| Log out button | Ends the session | `POST /logout` |
+| Add expense | Adds an expense to a chosen category | `GET /categories`, `POST /expenses` |
+| Add category | Adds a category | `POST /categories` |
+| Monthly total | Shows the total for the selected month | `GET /expenses/monthly-total` |
+| Expenses | Lists all expenses, one category, or a date range, with a delete button per row | `GET /expenses`, `GET /expenses/by-category`, `GET /expenses/by-date-range`, `DELETE /expenses/<id>` |
+| Spending by category | Shows the expense count and total for every category | `GET /expenses/totals-by-category` |
+
+Amounts are displayed in US dollars. The page follows the browser's light or dark colour scheme.
